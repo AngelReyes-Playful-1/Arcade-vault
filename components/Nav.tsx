@@ -8,7 +8,7 @@ import { useUser } from '@/app/context/UserContext';
 export default function Nav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { user, signOut } = useUser();
+  const { user, loading, signOut } = useUser();
 
   const isLibrary = pathname.startsWith('/games');
   const isHall = pathname === '/hall-of-fame';
@@ -18,9 +18,9 @@ export default function Nav() {
     setOpen(false);
   }
 
-  function handleSignOut() {
-    signOut();
+  async function handleSignOut() {
     close();
+    await signOut();
   }
 
   return (
@@ -52,7 +52,7 @@ export default function Nav() {
           <span>CRÉDITOS · 03</span>
         </div>
 
-        {user ? (
+        {loading ? null : user ? (
           <button className="btn ghost auth-btn" onClick={handleSignOut}>
             {user} ▾
           </button>

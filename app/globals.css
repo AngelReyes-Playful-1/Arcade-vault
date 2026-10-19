@@ -833,6 +833,14 @@ a { color: inherit; text-decoration: none; }
 .auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .social { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .social .btn { padding: 12px; font-size: 9px; }
+.social .btn:disabled { cursor: not-allowed; opacity: 0.55; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.social .btn:disabled:hover { color: var(--ink-dim); border-color: var(--ink-faint); }
+.soon-tag { font-size: 7px; padding: 3px 5px; color: var(--yellow); border: 1px solid var(--yellow); letter-spacing: 0.12em; }
+.auth-card .btn[type="submit"]:disabled { cursor: wait; opacity: 0.6; }
+.auth-check { text-align: center; padding: 8px 0 4px; }
+.auth-check h3 { margin: 0 0 14px; font-family: var(--pixel); font-size: 14px; letter-spacing: 0.1em; }
+.auth-check p { margin: 0 0 18px; font-size: 13px; line-height: 1.6; color: var(--ink-dim); }
+.auth-check strong { color: var(--ink); font-weight: 400; word-break: break-all; }
 
 /* ===== salón ===== */
 .av-hall {
