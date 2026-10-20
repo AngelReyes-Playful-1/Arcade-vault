@@ -1,12 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useUser } from "@/app/context/UserContext";
 import GamePlayer from "@/components/GamePlayer";
 import { createClient } from "@/lib/supabase/client";
 import type { GameRow } from "@/lib/supabase/types";
 import { GAME_REGISTRY } from "./registry";
+import TouchControls from "./TouchControls";
+import {
+  getCoarseSnapshot,
+  getServerCoarseSnapshot,
+  subscribeCoarse,
+} from "./touch";
 
 // Nombre para el leaderboard, independiente del nick de sesión
 const PLAYER_NAME_KEY = "av_player_name";
@@ -32,9 +38,17 @@ function CanvasPlayer({
   hasLives,
   hasLevel,
   initialLives = 0,
+  touchControls,
 }: { game: GameRow } & (typeof GAME_REGISTRY)[string]) {
   const { user, userId } = useUser();
   const [supabase] = useState(() => createClient());
+  const coarse = useSyncExternalStore(
+    subscribeCoarse,
+    getCoarseSnapshot,
+    getServerCoarseSnapshot,
+  );
+  // Botonera solo en táctil y si el juego la declara
+  const touch = coarse && touchControls ? touchControls : null;
 
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(initialLives);
@@ -94,8 +108,53 @@ function CanvasPlayer({
     setRun((r) => r + 1);
   }
 
+  const crt = (
+    <div className="crt">
+      <div className="crt-screen">
+        <div style={{ position: "absolute", inset: 0 }}>
+          <Component
+            key={run}
+            paused={paused || over}
+            onScoreChange={setScore}
+            onLivesChange={hasLives ? setLives : undefined}
+            onLevelChange={hasLevel ? setLevel : undefined}
+            onGameOver={handleGameOver}
+          />
+        </div>
+        {paused && (
+          <div
+            className="crt-content"
+            style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}
+          >
+            <div>
+              <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
+                EN PAUSA
+              </div>
+              <div
+                className="mono"
+                style={{
+                  fontSize: 11,
+                  color: "var(--ink-dim)",
+                  marginTop: 10,
+                  letterSpacing: "0.16em",
+                }}
+              >
+                PULSA REANUDAR PARA CONTINUAR
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="crt-bottom">
+        <span className="led">SEÑAL OK</span>
+        <span>{game.title} · CRT-83 · 60 HZ</span>
+        <span>CARGA · 1MB</span>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="av-player fade-in">
+    <div className={`av-player fade-in${touch ? " is-touch" : ""}`}>
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div className="hud-stat">
@@ -134,48 +193,23 @@ function CanvasPlayer({
         </div>
       </div>
 
-      <div className="crt">
-        <div className="crt-screen">
-          <div style={{ position: "absolute", inset: 0 }}>
-            <Component
-              key={run}
-              paused={paused || over}
-              onScoreChange={setScore}
-              onLivesChange={hasLives ? setLives : undefined}
-              onLevelChange={hasLevel ? setLevel : undefined}
-              onGameOver={handleGameOver}
-            />
-          </div>
-          {paused && (
-            <div
-              className="crt-content"
-              style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}
-            >
-              <div>
-                <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
-                  EN PAUSA
-                </div>
-                <div
-                  className="mono"
-                  style={{
-                    fontSize: 11,
-                    color: "var(--ink-dim)",
-                    marginTop: 10,
-                    letterSpacing: "0.16em",
-                  }}
-                >
-                  PULSA REANUDAR PARA CONTINUAR
-                </div>
-              </div>
-            </div>
-          )}
+      {touch ? (
+        <div className="touch-stage">
+          <TouchControls
+            zone="left"
+            buttons={touch}
+            disabled={paused || over}
+          />
+          {crt}
+          <TouchControls
+            zone="right"
+            buttons={touch}
+            disabled={paused || over}
+          />
         </div>
-        <div className="crt-bottom">
-          <span className="led">SEÑAL OK</span>
-          <span>{game.title} · CRT-83 · 60 HZ</span>
-          <span>CARGA · 1MB</span>
-        </div>
-      </div>
+      ) : (
+        crt
+      )}
 
       {over && (
         <div className="modal-bd">
