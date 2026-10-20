@@ -42,6 +42,7 @@ Usa siempre /frontend-design para diseñar la interfaz de usuario.
 - `/spec` — write a spec in `specs/` (Klerith/fernando-skills)
 - `/spec-impl` — implement a spec on its own branch (Klerith/fernando-skills)
 - `/add-game <nombre> [ruta-referencia]` — project skill (`.claude/skills/add-game/`): generates a game spec on top of `/spec`; `contract.md` defines the integration contract every game must meet. Only writes the spec; implement with `/spec-impl`.
+- `@game-planner` — project subagent (`.claude/agents/game-planner.md`): suggests 2–3 next-game candidates (weights technical fit + catalog diversity), writes `references/templates/game-proposal-YYYY-MM-DD.md` (from `game-proposal.template.md`) with a TODO checklist per candidate. Suggestion-only. Local memory of past suggestions in `.claude/agent-memory-local/game-planner/` (gitignored).
 
 ## Architecture
 
