@@ -1,18 +1,12 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 import { useUser } from "@/app/context/UserContext";
+import GamePlayer from "@/components/GamePlayer";
 import { createClient } from "@/lib/supabase/client";
-
-// Canvas y requestAnimationFrame solo existen en el navegador
-const AsteroidsGame = dynamic(
-  () => import("@/components/games/AsteroidsGame"),
-  { ssr: false },
-);
-
-const game = { id: "asteroids", title: "ASTEROIDS" };
+import type { GameRow } from "@/lib/supabase/types";
+import { GAME_REGISTRY } from "./registry";
 
 // Nombre para el leaderboard, independiente del nick de sesión
 const PLAYER_NAME_KEY = "av_player_name";
@@ -25,12 +19,25 @@ function readStoredName() {
   }
 }
 
-export default function AsteroidsPlayer() {
+export default function GamePlayShell({ game }: { game: GameRow }) {
+  const entry = GAME_REGISTRY[game.id];
+  // Juegos sin implementación todavía: placeholder
+  if (!entry) return <GamePlayer game={game} />;
+  return <CanvasPlayer game={game} {...entry} />;
+}
+
+function CanvasPlayer({
+  game,
+  Component,
+  hasLives,
+  hasLevel,
+  initialLives = 0,
+}: { game: GameRow } & (typeof GAME_REGISTRY)[string]) {
   const { user, userId } = useUser();
   const [supabase] = useState(() => createClient());
 
   const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(3);
+  const [lives, setLives] = useState(initialLives);
   const [level, setLevel] = useState(1);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
@@ -77,7 +84,7 @@ export default function AsteroidsPlayer() {
 
   function restart() {
     setScore(0);
-    setLives(3);
+    setLives(initialLives);
     setLevel(1);
     setPaused(false);
     setOver(false);
@@ -101,14 +108,18 @@ export default function AsteroidsPlayer() {
             <div className="l">Puntuación</div>
             <div className="v">{score.toLocaleString("es-ES")}</div>
           </div>
-          <div className="hud-stat lives">
-            <div className="l">Vidas</div>
-            <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
-          </div>
-          <div className="hud-stat level">
-            <div className="l">Nivel</div>
-            <div className="v">{String(level).padStart(2, "0")}</div>
-          </div>
+          {hasLives && (
+            <div className="hud-stat lives">
+              <div className="l">Vidas</div>
+              <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
+            </div>
+          )}
+          {hasLevel && (
+            <div className="hud-stat level">
+              <div className="l">Nivel</div>
+              <div className="v">{String(level).padStart(2, "0")}</div>
+            </div>
+          )}
         </div>
         <div className="hud-actions">
           <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
@@ -126,12 +137,12 @@ export default function AsteroidsPlayer() {
       <div className="crt">
         <div className="crt-screen">
           <div style={{ position: "absolute", inset: 0 }}>
-            <AsteroidsGame
+            <Component
               key={run}
               paused={paused || over}
               onScoreChange={setScore}
-              onLivesChange={setLives}
-              onLevelChange={setLevel}
+              onLivesChange={hasLives ? setLives : undefined}
+              onLevelChange={hasLevel ? setLevel : undefined}
               onGameOver={handleGameOver}
             />
           </div>

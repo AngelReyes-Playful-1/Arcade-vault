@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import GamePlayer from "@/components/GamePlayer";
+import GamePlayShell from "@/components/games/GamePlayShell";
 import { createClient } from "@/lib/supabase/server";
 import type { GameRow } from "@/lib/supabase/types";
 
@@ -19,5 +19,5 @@ export default async function GamePlayerPage({
   if (error) throw error;
   if (!data) notFound();
 
-  return <GamePlayer game={data as GameRow} />;
+  return <GamePlayShell game={data as GameRow} />;
 }
