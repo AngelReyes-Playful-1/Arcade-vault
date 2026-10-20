@@ -3,8 +3,8 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
-import { GAMES } from "@/app/data";
 import { useUser } from "@/app/context/UserContext";
+import { createClient } from "@/lib/supabase/client";
 
 // Canvas y requestAnimationFrame solo existen en el navegador
 const AsteroidsGame = dynamic(
@@ -12,10 +12,22 @@ const AsteroidsGame = dynamic(
   { ssr: false },
 );
 
-const game = GAMES.find((g) => g.id === "asteroids")!;
+const game = { id: "asteroids", title: "ASTEROIDS" };
+
+// Nombre para el leaderboard, independiente del nick de sesión
+const PLAYER_NAME_KEY = "av_player_name";
+
+function readStoredName() {
+  try {
+    return localStorage.getItem(PLAYER_NAME_KEY);
+  } catch {
+    return null;
+  }
+}
 
 export default function AsteroidsPlayer() {
-  const { user } = useUser();
+  const { user, userId } = useUser();
+  const [supabase] = useState(() => createClient());
 
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
@@ -24,12 +36,43 @@ export default function AsteroidsPlayer() {
   const [over, setOver] = useState(false);
   const [name, setName] = useState(user ?? "INVITADO");
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   // Cambiar la key remonta el canvas y reinicia la partida desde cero
   const [run, setRun] = useState(0);
 
+  function openGameOver() {
+    setName(readStoredName() ?? user ?? "INVITADO");
+    setOver(true);
+  }
+
   function handleGameOver(finalScore: number) {
     setScore(finalScore);
-    setOver(true);
+    openGameOver();
+  }
+
+  async function saveScore() {
+    const playerName = name.trim();
+    if (saved || !playerName) return;
+    // Deshabilita el botón antes del insert para evitar doble envío
+    setSaved(true);
+    setSaveError(null);
+
+    try {
+      localStorage.setItem(PLAYER_NAME_KEY, playerName);
+    } catch {
+      // Sin storage (modo privado): el score se guarda igual
+    }
+
+    const { error } = await supabase.from("scores").insert({
+      game_id: game.id,
+      player_name: playerName,
+      score,
+      user_id: userId ?? null,
+    });
+    if (error) {
+      setSaved(false);
+      setSaveError("NO SE PUDO GUARDAR. INTÉNTALO DE NUEVO.");
+    }
   }
 
   function restart() {
@@ -39,6 +82,7 @@ export default function AsteroidsPlayer() {
     setPaused(false);
     setOver(false);
     setSaved(false);
+    setSaveError(null);
     setName(user ?? "INVITADO");
     setRun((r) => r + 1);
   }
@@ -70,7 +114,7 @@ export default function AsteroidsPlayer() {
           <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
-          <button className="btn magenta" onClick={() => setOver(true)}>
+          <button className="btn magenta" onClick={openGameOver}>
             FIN
           </button>
           <Link href={`/games/${game.id}`} className="btn ghost">
@@ -137,12 +181,24 @@ export default function AsteroidsPlayer() {
                   }
                   placeholder="TUS INICIALES"
                 />
-                <button className="btn yellow" onClick={() => setSaved(true)}>
+                <button
+                  className="btn yellow"
+                  onClick={saveScore}
+                  disabled={saved || !name.trim()}
+                >
                   GUARDAR PUNTUACIÓN
                 </button>
               </div>
             ) : (
               <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
+            )}
+            {saveError && (
+              <div
+                className="mono"
+                style={{ color: "var(--magenta)", fontSize: 11, marginTop: 8 }}
+              >
+                {saveError}
+              </div>
             )}
             <div className="actions">
               <button className="btn" onClick={restart}>
