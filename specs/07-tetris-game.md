@@ -1,6 +1,6 @@
 # SPEC 07 — Integración del juego Tetris
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** 05-asteroids-game, 06-games-table-leadeboard-supabase
 > **Fecha:** 2026-10-20
 > **Objetivo:** Integrar TETRIS como juego jugable con ID `tetris`, registrado en Supabase y con sus puntuaciones en el leaderboard, portado desde `references/starter-games/03-claude-tetris`.
