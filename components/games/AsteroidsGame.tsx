@@ -1,14 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-
-interface AsteroidsGameProps {
-  paused: boolean;
-  onScoreChange: (score: number) => void;
-  onLivesChange: (lives: number) => void;
-  onLevelChange: (level: number) => void;
-  onGameOver: (finalScore: number) => void;
-}
+import type { GameProps } from "./types";
 
 const W = 800;
 const H = 600;
@@ -19,7 +12,7 @@ export default function AsteroidsGame({
   onLivesChange,
   onLevelChange,
   onGameOver,
-}: AsteroidsGameProps) {
+}: GameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Refs para que el loop lea siempre los valores actuales sin reiniciar el efecto
@@ -604,11 +597,11 @@ export default function AsteroidsGame({
       }
       if (lives !== prevLives) {
         prevLives = lives;
-        cb.onLivesChange(lives);
+        cb.onLivesChange?.(lives);
       }
       if (level !== prevLevel) {
         prevLevel = level;
-        cb.onLevelChange(level);
+        cb.onLevelChange?.(level);
       }
       if (state === "gameover" && !gameOverNotified) {
         gameOverNotified = true;
