@@ -7,6 +7,9 @@
 .playwright-mcp/*
 !.playwright-mcp/.gitkeep
 
+# claude agent local memory
+.claude/agent-memory-local/
+
 # dependencies
 /node_modules
 /.pnp
