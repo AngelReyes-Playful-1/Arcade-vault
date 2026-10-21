@@ -443,10 +443,19 @@ export default function ArkanoidGame({
       state.input.mouseX = (e.clientX - rect.left) * (CANVAS_W / rect.width);
     }
 
+    // Arrastre táctil = ratón; el tap para lanzar llega por el click
+    function onTouchPointer(e: PointerEvent) {
+      if (e.pointerType !== "touch" || inputBlocked()) return;
+      const rect = canvas!.getBoundingClientRect();
+      state.input.mouseX = (e.clientX - rect.left) * (CANVAS_W / rect.width);
+    }
+
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     canvas.addEventListener("click", onAction);
     canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("pointermove", onTouchPointer);
+    canvas.addEventListener("pointerdown", onTouchPointer);
 
     // ── Notificaciones a React ────────────────────────────────────────────────
     let prevScore = 0;
@@ -502,6 +511,8 @@ export default function ArkanoidGame({
       window.removeEventListener("keyup", onKeyUp);
       canvas.removeEventListener("click", onAction);
       canvas.removeEventListener("mousemove", onMouseMove);
+      canvas.removeEventListener("pointermove", onTouchPointer);
+      canvas.removeEventListener("pointerdown", onTouchPointer);
     };
   }, []);
 
